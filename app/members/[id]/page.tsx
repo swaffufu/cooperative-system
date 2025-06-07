@@ -7,8 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { getMemberById } from "@/app/actions/members"
+import { getMemberBenefits } from "@/app/actions/benefits"
 import { MemberTransactions } from "@/components/member-transactions"
 import { MemberShareChart } from "@/components/member-share-chart"
+import { MemberBenefits } from "@/components/member-benefits"
 import { DeleteMemberDialog } from "@/components/delete-member-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -36,9 +38,11 @@ export default async function MemberDetailsPage({ params }: MemberDetailsPagePro
 
 async function MemberDetails({ memberId }: { memberId: number }) {
   let member
+  let benefits
 
   try {
     member = await getMemberById(memberId)
+    benefits = await getMemberBenefits(memberId)
   } catch (error) {
     return notFound()
   }
@@ -116,6 +120,10 @@ async function MemberDetails({ memberId }: { memberId: number }) {
                 <p className="text-sm text-muted-foreground">{member.phone_number || "-"}</p>
               </div>
               <div className="space-y-1">
+                <p className="text-sm font-medium">Email</p>
+                <p className="text-sm text-muted-foreground">{member.email || "-"}</p>
+              </div>
+              <div className="space-y-1">
                 <p className="text-sm font-medium">Occupation</p>
                 <p className="text-sm text-muted-foreground">{member.occupation || "-"}</p>
               </div>
@@ -128,6 +136,30 @@ async function MemberDetails({ memberId }: { memberId: number }) {
                 <p className="text-sm text-muted-foreground">{member.approval_date || "-"}</p>
               </div>
             </div>
+
+            {(member.status_note || member.status_date) && (
+              <div className="mt-4 rounded-lg border p-4">
+                <h4 className="font-medium mb-2">Status Details</h4>
+                {member.status_date && (
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">
+                      {member.status === "resigned"
+                        ? "Resignation Date"
+                        : member.status === "deceased"
+                          ? "Date of Death"
+                          : "Status Date"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{member.status_date}</p>
+                  </div>
+                )}
+                {member.status_note && (
+                  <div className="space-y-1 mt-2">
+                    <p className="text-sm font-medium">Notes</p>
+                    <p className="text-sm text-muted-foreground">{member.status_note}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -175,6 +207,7 @@ async function MemberDetails({ memberId }: { memberId: number }) {
         <TabsList>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="chart">Share Growth</TabsTrigger>
+          <TabsTrigger value="benefits">Benefits</TabsTrigger>
         </TabsList>
         <TabsContent value="transactions">
           <Card>
@@ -197,6 +230,17 @@ async function MemberDetails({ memberId }: { memberId: number }) {
               <div className="h-[400px]">
                 <MemberShareChart memberId={memberId} />
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="benefits">
+          <Card>
+            <CardHeader>
+              <CardTitle>Member Benefits</CardTitle>
+              <CardDescription>Available and claimed benefits</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MemberBenefits benefits={benefits} />
             </CardContent>
           </Card>
         </TabsContent>

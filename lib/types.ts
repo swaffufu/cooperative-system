@@ -8,10 +8,13 @@ export type Member = {
   permanent_address: string | null
   mailing_address: string | null
   phone_number: string | null
+  email: string | null
   occupation: string | null
   join_date: string | null
   approval_date: string | null
   status: "active" | "resigned" | "deceased"
+  status_note: string | null
+  status_date: string | null
   share_balance: number
   bonus_balance: number
   total_balance: number
@@ -56,6 +59,17 @@ export type Cooperative = {
   email: string | null
   phone: string | null
   fax: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type Benefit = {
+  id: string
+  member_id: number
+  benefit_type: string
+  amount: number
+  status: "available" | "claimed"
+  claimed_at: string | null
   created_at: string
   updated_at: string
 }
