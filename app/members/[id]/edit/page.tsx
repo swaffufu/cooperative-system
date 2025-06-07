@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { notFound } from "next/navigation"
 import Link from "next/link"
@@ -8,6 +8,7 @@ import { ArrowLeftIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { EditMemberDialog } from "@/components/edit-member-dialog"
 import { getMemberById } from "@/app/actions/members"
+import type { Member } from "@/lib/types"
 
 interface EditMemberPageProps {
   params: {
@@ -18,15 +19,38 @@ interface EditMemberPageProps {
 export default function EditMemberPage({ params }: EditMemberPageProps) {
   const router = useRouter()
   const [isDialogOpen, setIsDialogOpen] = useState(true)
+  const [member, setMember] = useState<Member | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const memberId = Number.parseInt(params.id)
 
-  if (isNaN(memberId)) {
-    return notFound()
-  }
+  useEffect(() => {
+    if (isNaN(memberId)) {
+      router.push("/not-found")
+      return
+    }
+
+    async function loadMember() {
+      try {
+        const memberData = await getMemberById(memberId)
+        setMember(memberData)
+      } catch (error) {
+        console.error("Error loading member:", error)
+        router.push("/not-found")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadMember()
+  }, [memberId, router])
 
   const handleDialogClose = () => {
     setIsDialogOpen(false)
     router.push(`/members/${memberId}`)
+  }
+
+  if (isNaN(memberId)) {
+    return null // This will be handled in useEffect
   }
 
   return (
@@ -40,27 +64,13 @@ export default function EditMemberPage({ params }: EditMemberPageProps) {
         <h1 className="text-3xl font-bold tracking-tight">Edit Member</h1>
       </div>
 
-      <MemberEditorWrapper memberId={memberId} open={isDialogOpen} onOpenChange={handleDialogClose} />
+      {!isLoading && member && (
+        <EditMemberDialog 
+          member={member} 
+          open={isDialogOpen} 
+          onOpenChange={handleDialogClose} 
+        />
+      )}
     </div>
   )
-}
-
-async function MemberEditorWrapper({
-  memberId,
-  open,
-  onOpenChange,
-}: {
-  memberId: number
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
-  let member
-
-  try {
-    member = await getMemberById(memberId)
-  } catch (error) {
-    return notFound()
-  }
-
-  return <EditMemberDialog member={member} open={open} onOpenChange={onOpenChange} />
 }

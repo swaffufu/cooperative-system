@@ -69,14 +69,15 @@ async function MemberDetails({ memberId }: { memberId: number }) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button asChild>
+          <Button asChild>  
             <Link href={`/transactions/new?memberId=${member.id}`}>
               <PlusIcon className="mr-2 h-4 w-4" />
               New Transaction
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href={`/members/${member.id}/edit`}  onClick={(e) => e.stopPropagation()}>
+            <Link href={`/members/${member.id}/edit`} 
+              onClick={(e) => e.stopPropagation()}>
               <EditIcon className="mr-2 h-4 w-4" />
               Edit Member
             </Link>
