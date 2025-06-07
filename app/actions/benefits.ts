@@ -31,10 +31,9 @@ export async function claimBenefit(benefitId: string) {
     .update({
       status: "claimed",
       claimed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     })
     .eq("id", benefitId)
-    .eq("status", "available") // Only allow claiming if status is available
+    .eq("status", "available") // Only allow claiming available benefits
     .select()
     .single()
 

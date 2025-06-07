@@ -61,6 +61,7 @@ export async function createMember(formData: FormData) {
   const permanentAddress = formData.get("permanentAddress") as string
   const mailingAddress = formData.get("mailingAddress") as string
   const phoneNumber = formData.get("phoneNumber") as string
+  const email = formData.get("email") as string
   const occupation = formData.get("occupation") as string
   const joinDate = formData.get("joinDate") as string
   const initialShare = Number.parseFloat(formData.get("initialShare") as string) || 0
@@ -84,6 +85,7 @@ export async function createMember(formData: FormData) {
         permanent_address: permanentAddress,
         mailing_address: mailingAddress,
         phone_number: phoneNumber,
+        email: email,
         occupation,
         join_date: joinDate || null,
         share_balance: initialShare,
@@ -156,8 +158,11 @@ export async function updateMember(id: number, formData: FormData) {
   const permanentAddress = formData.get("permanentAddress") as string
   const mailingAddress = formData.get("mailingAddress") as string
   const phoneNumber = formData.get("phoneNumber") as string
+  const email = formData.get("email") as string
   const occupation = formData.get("occupation") as string
   const status = formData.get("status") as "active" | "resigned" | "deceased"
+  const statusDate = formData.get("statusDate") as string
+  const statusNote = formData.get("statusNote") as string
 
   // Extract nominee data
   const nomineeName = formData.get("nomineeName") as string
@@ -176,8 +181,11 @@ export async function updateMember(id: number, formData: FormData) {
       permanent_address: permanentAddress,
       mailing_address: mailingAddress,
       phone_number: phoneNumber,
+      email: email,
       occupation,
       status,
+      status_date: statusDate || null,
+      status_note: statusNote || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
