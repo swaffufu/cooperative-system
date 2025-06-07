@@ -76,8 +76,7 @@ async function MemberDetails({ memberId }: { memberId: number }) {
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href={`/members/${member.id}/edit`} 
-              onClick={(e) => e.stopPropagation()}>
+            <Link href={`/members/${member.id}/edit`}>
               <EditIcon className="mr-2 h-4 w-4" />
               Edit Member
             </Link>
