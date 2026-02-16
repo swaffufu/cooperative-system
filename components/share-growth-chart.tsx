@@ -1,7 +1,7 @@
 "use client"
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
-import { getTransactions } from "@/app/actions/transactions"
+import { getTransactionsLegacy } from "@/app/actions/transactions"
 import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -12,7 +12,7 @@ export default function ShareGrowthChart() {
     error,
   } = useQuery({
     queryKey: ["transactions"],
-    queryFn: getTransactions,
+    queryFn: getTransactionsLegacy,
   })
 
   if (isLoading) {

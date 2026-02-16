@@ -8,7 +8,7 @@ import { ArrowLeftIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { EditMemberDialog } from "@/components/edit-member-dialog"
 import { getMemberById } from "@/app/actions/members"
-import type { Member } from "@/lib/types"
+import type { Member, Nominee } from "@/lib/types"
 
 interface EditMemberPageProps {
   params: {
@@ -16,10 +16,12 @@ interface EditMemberPageProps {
   }
 }
 
+type MemberWithNominee = Member & { nominee: Nominee | null }
+
 export default function EditMemberPage({ params }: EditMemberPageProps) {
   const router = useRouter()
   const [isDialogOpen, setIsDialogOpen] = useState(true)
-  const [member, setMember] = useState<Member | null>(null)
+  const [member, setMember] = useState<MemberWithNominee | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const memberId = Number.parseInt(params.id)
 

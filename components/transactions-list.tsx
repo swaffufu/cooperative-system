@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getTransactions } from "@/app/actions/transactions"
+import { getTransactionsLegacy } from "@/app/actions/transactions"
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 
@@ -13,7 +13,7 @@ export function TransactionsList() {
     error,
   } = useQuery({
     queryKey: ["transactions"],
-    queryFn: getTransactions,
+    queryFn: getTransactionsLegacy,
   })
 
   if (isLoading) {

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Textarea } from "@/components/ui/textarea"
-import { getMembers } from "@/app/actions/members"
+import { getMembersLegacy } from "@/app/actions/members"
 import { createTransaction } from "@/app/actions/transactions"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "@/components/ui/use-toast"
@@ -34,7 +34,7 @@ export default function NewTransactionPage() {
     error,
   } = useQuery({
     queryKey: ["members"],
-    queryFn: getMembers,
+    queryFn: getMembersLegacy,
   })
 
   // Find the selected member
@@ -119,16 +119,28 @@ export default function NewTransactionPage() {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+                  <Select 
+                    value={selectedMemberId} 
+                    onValueChange={setSelectedMemberId}
+                    disabled={isLoading}
+                  >
                     <SelectTrigger id="memberSearch" className="pl-8">
-                      <SelectValue placeholder="Search for a member..." />
+                      <SelectValue placeholder={isLoading ? "Loading members..." : "Search for a member..."} />
                     </SelectTrigger>
                     <SelectContent>
-                      {members.map((member) => (
-                        <SelectItem key={member.id} value={member.id.toString()}>
-                          {member.full_name} ({member.member_no})
-                        </SelectItem>
-                      ))}
+                      {isLoading ? (
+                        <div className="p-4 text-center text-muted-foreground">Loading members...</div>
+                      ) : error ? (
+                        <div className="p-4 text-center text-red-500">Error loading members</div>
+                      ) : members.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">No members found</div>
+                      ) : (
+                        members.map((member) => (
+                          <SelectItem key={member.id} value={member.id.toString()}>
+                            {member.full_name} ({member.member_no})
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -221,10 +233,14 @@ export default function NewTransactionPage() {
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="2023">2023</SelectItem>
-                    <SelectItem value="2022">2022</SelectItem>
-                    <SelectItem value="2021">2021</SelectItem>
-                    <SelectItem value="2020">2020</SelectItem>
+                    {Array.from({ length: 10 }, (_, i) => {
+                      const year = new Date().getFullYear() - i
+                      return (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
               </div>

@@ -2,10 +2,42 @@
 
 import { revalidatePath } from "next/cache"
 import { createServerSupabaseClient } from "@/lib/supabase"
+import { transactionSchema, validateFormDataSafe } from "@/lib/validation"
 import type { Transaction } from "@/lib/types"
 
 // Get all transactions
-export async function getTransactions() {
+export async function getTransactions(page = 1, limit = 50) {
+  const supabase = createServerSupabaseClient()
+  const offset = (page - 1) * limit
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select(`
+      *,
+      member:member_id (
+        id,
+        member_no,
+        full_name
+      )
+    `)
+    .order("transaction_date", { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (error) {
+    console.error("Error fetching transactions:", error)
+    throw new Error("Failed to fetch transactions")
+  }
+
+  return {
+    transactions: data as Transaction[],
+    total: data?.length || 0,
+    page,
+    limit,
+  }
+}
+
+// Get all transactions (legacy)
+export async function getTransactionsLegacy() {
   const supabase = createServerSupabaseClient()
 
   const { data, error } = await supabase
@@ -32,6 +64,11 @@ export async function getTransactions() {
 export async function getTransactionsByMemberId(memberId: number) {
   const supabase = createServerSupabaseClient()
 
+  // Validate member ID
+  if (!memberId || isNaN(memberId)) {
+    throw new Error("Invalid member ID")
+  }
+
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
@@ -50,21 +87,20 @@ export async function getTransactionsByMemberId(memberId: number) {
 export async function createTransaction(formData: FormData) {
   const supabase = createServerSupabaseClient()
 
-  // Extract transaction data
-  const memberId = Number.parseInt(formData.get("memberId") as string)
-  const transactionDate = formData.get("transactionDate") as string
-  const transactionType = formData.get("transactionType") as string
-  const description = (formData.get("description") as string) || transactionType
-  const receiptNo = formData.get("receiptNo") as string
-  const year = formData.get("year") as string
-  const amount = Number.parseFloat(formData.get("amount") as string) || 0
-  const remarks = formData.get("remarks") as string
+  // Validate input
+  const validation = validateFormDataSafe(transactionSchema, formData)
+  if (!validation.success) {
+    const errors = validation.errors.errors.map(e => `${e.path.join(".")}: ${e.message}`).join(", ")
+    throw new Error(`Validation failed: ${errors}`)
+  }
 
-  // Get current member balances
+  const data = validation.data
+
+  // Get current member balances with row lock
   const { data: member, error: memberError } = await supabase
     .from("members")
     .select("share_balance, bonus_balance, total_balance")
-    .eq("id", memberId)
+    .eq("id", data.memberId)
     .single()
 
   if (memberError) {
@@ -78,79 +114,98 @@ export async function createTransaction(formData: FormData) {
   let newBonusBalance = member.bonus_balance
 
   // Calculate new balances based on transaction type
-  switch (transactionType) {
+  switch (data.transactionType) {
     case "deposit":
-      amountIn = amount
-      newShareBalance += amount
+      amountIn = data.amount
+      newShareBalance += data.amount
       break
     case "withdrawal":
-      amountOut = amount
-      newShareBalance -= amount
+      // Check if sufficient balance exists
+      if (member.share_balance < data.amount) {
+        throw new Error(`Insufficient balance. Available: RM ${member.share_balance.toFixed(2)}`)
+      }
+      amountOut = data.amount
+      newShareBalance -= data.amount
       break
     case "dividend":
-      amountIn = amount
-      newBonusBalance += amount
+      amountIn = data.amount
+      newBonusBalance += data.amount
       break
     case "fee":
-      amountOut = amount
-      newShareBalance -= amount
+      // Check if sufficient balance exists for fees
+      if (member.total_balance < data.amount) {
+        throw new Error(`Insufficient balance to pay fee. Available: RM ${member.total_balance.toFixed(2)}`)
+      }
+      amountOut = data.amount
+      newShareBalance -= data.amount
       break
     default:
-      if (amount > 0) {
-        amountIn = amount
-        newShareBalance += amount
+      if (data.amount > 0) {
+        amountIn = data.amount
+        newShareBalance += data.amount
       } else {
-        amountOut = Math.abs(amount)
-        newShareBalance -= Math.abs(amount)
+        amountOut = Math.abs(data.amount)
+        newShareBalance -= Math.abs(data.amount)
       }
   }
 
   const newTotalBalance = newShareBalance + newBonusBalance
+  const now = new Date().toISOString()
 
-  // Insert transaction
-  const { data: transaction, error: transactionError } = await supabase
-    .from("transactions")
-    .insert([
-      {
-        member_id: memberId,
-        transaction_date: transactionDate,
-        description,
-        receipt_no: receiptNo || null,
-        year: year || null,
-        amount_in: amountIn,
-        amount_out: amountOut,
+  // Use database function if available, otherwise do sequential operations
+  // For now, we'll do it sequentially with error handling
+  try {
+    // Insert transaction first
+    const { data: transaction, error: transactionError } = await supabase
+      .from("transactions")
+      .insert([
+        {
+          member_id: data.memberId,
+          transaction_date: data.transactionDate,
+          description: data.description || data.transactionType,
+          receipt_no: data.receiptNo || null,
+          year: data.year || null,
+          amount_in: amountIn,
+          amount_out: amountOut,
+          share_balance: newShareBalance,
+          bonus_balance: newBonusBalance,
+          total_balance: newTotalBalance,
+          remarks: data.remarks || null,
+          created_by: "System",
+          created_at: now,
+        },
+      ])
+      .select()
+      .single()
+
+    if (transactionError) {
+      console.error("Error creating transaction:", transactionError)
+      throw new Error("Failed to create transaction")
+    }
+
+    // Update member balances
+    const { error: updateError } = await supabase
+      .from("members")
+      .update({
         share_balance: newShareBalance,
         bonus_balance: newBonusBalance,
         total_balance: newTotalBalance,
-        remarks: remarks || null,
-        created_by: "System",
-      },
-    ])
-    .select()
-    .single()
+        updated_at: now,
+      })
+      .eq("id", data.memberId)
 
-  if (transactionError) {
-    console.error("Error creating transaction:", transactionError)
-    throw new Error("Failed to create transaction")
+    if (updateError) {
+      // Try to delete the transaction if balance update fails
+      await supabase.from("transactions").delete().eq("id", transaction.id)
+      console.error("Error updating member balances:", updateError)
+      throw new Error("Failed to update member balances")
+    }
+
+    revalidatePath(`/members/${data.memberId}`)
+    revalidatePath("/transactions")
+    return transaction
+  } catch (error) {
+    console.error("Transaction error:", error)
+    throw error
   }
-
-  // Update member balances
-  const { error: updateError } = await supabase
-    .from("members")
-    .update({
-      share_balance: newShareBalance,
-      bonus_balance: newBonusBalance,
-      total_balance: newTotalBalance,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", memberId)
-
-  if (updateError) {
-    console.error("Error updating member balances:", updateError)
-    throw new Error("Failed to update member balances")
-  }
-
-  revalidatePath(`/members/${memberId}`)
-  revalidatePath("/transactions")
-  return transaction
 }

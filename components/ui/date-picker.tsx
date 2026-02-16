@@ -9,12 +9,22 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 export interface DatePickerProps {
   date?: Date
-  onSelect: (date?: Date) => void
+  setDate?: (date: Date) => void
+  onSelect?: (date?: Date) => void
   disabled?: boolean
   placeholder?: string
 }
 
-export function DatePicker({ date, onSelect, disabled = false, placeholder = "Pick a date" }: DatePickerProps) {
+export function DatePicker({ date, setDate, onSelect, disabled = false, placeholder = "Pick a date" }: DatePickerProps) {
+  const handleSelect = (selectedDate: Date | undefined) => {
+    if (setDate && selectedDate) {
+      setDate(selectedDate)
+    }
+    if (onSelect) {
+      onSelect(selectedDate)
+    }
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -28,7 +38,7 @@ export function DatePicker({ date, onSelect, disabled = false, placeholder = "Pi
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={date} onSelect={onSelect} initialFocus />
+        <Calendar mode="single" selected={date} onSelect={handleSelect} initialFocus />
       </PopoverContent>
     </Popover>
   )

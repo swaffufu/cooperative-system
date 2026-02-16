@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getTransactions } from "@/app/actions/transactions"
+import { getTransactionsLegacy } from "@/app/actions/transactions"
 import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
@@ -14,9 +14,11 @@ export default function RecentTransactions() {
     error,
   } = useQuery({
     queryKey: ["transactions"],
-    queryFn: getTransactions,
-    select: (data) => data.slice(0, 5), // Only show the 5 most recent transactions
+    queryFn: getTransactionsLegacy,
   })
+
+  // Only show the 5 most recent transactions
+  const recentTransactions = transactions.slice(0, 5)
 
   if (isLoading) {
     return <Skeleton className="h-[300px] w-full" />
@@ -44,7 +46,7 @@ export default function RecentTransactions() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {transactions.map((transaction) => (
+        {recentTransactions.map((transaction) => (
           <TableRow key={transaction.id}>
             <TableCell>
               {transaction.member && (

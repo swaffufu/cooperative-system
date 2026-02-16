@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/ui/date-picker"
-import { getMembers } from "@/app/actions/members"
+import { getMembersLegacy } from "@/app/actions/members"
 import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -23,7 +23,7 @@ export default function DividendsPage() {
     error,
   } = useQuery({
     queryKey: ["members"],
-    queryFn: getMembers,
+    queryFn: getMembersLegacy,
   })
 
   const handleCalculate = () => {

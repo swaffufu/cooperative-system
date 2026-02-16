@@ -23,10 +23,10 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { updateMember } from "@/app/actions/members"
-import type { Member } from "@/lib/types"
+import type { Member, Nominee } from "@/lib/types"
 
 interface EditMemberDialogProps {
-  member: Member
+  member: Member & { nominee: Nominee | null }
   open: boolean
   onOpenChange: (open: boolean) => void
 }

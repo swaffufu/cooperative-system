@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { getMembers } from "@/app/actions/members"
+import { getMembersLegacy } from "@/app/actions/members"
 import { useQuery } from "@tanstack/react-query"
 
 interface MembersListProps {
@@ -18,7 +18,7 @@ export function MembersList({ searchQuery, statusFilter }: MembersListProps) {
     error,
   } = useQuery({
     queryKey: ["members"],
-    queryFn: getMembers,
+    queryFn: getMembersLegacy,
   })
 
   // Filter members based on search query and status

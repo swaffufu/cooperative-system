@@ -1,7 +1,7 @@
 "use client"
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
-import { getMembers } from "@/app/actions/members"
+import { getMembersLegacy } from "@/app/actions/members"
 import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -12,7 +12,7 @@ export default function MemberStatusChart() {
     error,
   } = useQuery({
     queryKey: ["members"],
-    queryFn: getMembers,
+    queryFn: getMembersLegacy,
   })
 
   if (isLoading) {
