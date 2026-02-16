@@ -93,6 +93,25 @@ npm start
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm test` | Run tests in watch mode |
+| `npm run test:run` | Run tests once |
+
+## Testing
+
+This project uses Vitest for testing. Tests are located in `__tests__` directories alongside the code they test.
+
+```bash
+# Run tests in watch mode
+npm test
+
+# Run tests once
+npm run test:run
+```
+
+### Test Coverage
+
+- **Unit Tests**: Validation schemas (`lib/validation.ts`), utility functions (`lib/utils.ts`)
+- **Integration Tests**: Server actions (`app/actions/members.ts`)
 
 ## Recent Updates (v0.2.0)
 
